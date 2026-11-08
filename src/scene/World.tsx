@@ -45,7 +45,7 @@ export function GarudaParty() {
     <group ref={satya} position={WORLD.satyaSeat.toArray()}><Satyabhama /></group>
   </group>);
 }
-function Boss() {
+export function Boss() {
   const ref = useRef<Group>(null!);
   useFrame(() => { const g = ref.current; if (!g) return; const f = gs().flags; g.visible = !!f.bossEnter && sim.boss.dissolve < 1; g.position.copy(WORLD.bossPos); g.scale.setScalar(sim.boss.scale); });
   return <group ref={ref} visible={false}><Narakasura /></group>;

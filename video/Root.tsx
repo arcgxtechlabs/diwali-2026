@@ -5,6 +5,7 @@
 import { Composition, Folder } from 'remotion';
 import { COMPOSITIONS, DEFAULT_DURATIONS } from '../src/cinematics/compositions';
 import type { CinematicId } from '../src/game/types';
+import { Trailer, TRAILER_FPS, TRAILER_FRAMES } from './Trailer';
 
 const PROPS: Partial<Record<CinematicId, Record<string, unknown>>> = {
   title: { small: 'ARCGX TECHLABS PRESENTS', big: 'The Night Before the Lights' },
@@ -20,5 +21,6 @@ export const RemotionRoot = () => (
         <Composition key={id} id={id} component={COMPOSITIONS[id]} durationInFrames={DEFAULT_DURATIONS[id]} fps={30} width={1920} height={1080} defaultProps={PROPS[id] || {}} />
       ))}
     </Folder>
+    <Composition id="trailer" component={Trailer} durationInFrames={TRAILER_FRAMES} fps={TRAILER_FPS} width={1920} height={1080} />
   </>
 );
