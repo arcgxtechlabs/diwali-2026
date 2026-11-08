@@ -8,6 +8,7 @@ import { Guide } from '@/ui/Guide';
 import { HUD } from '@/ui/HUD';
 import { Closing } from '@/ui/Closing';
 import { Input } from '@/ui/Input';
+import { PortraitStudio } from '@/ui/PortraitStudio';
 import { useGameStore } from '@/store/gameStore';
 import { director } from '@/game/director';
 import { sim } from '@/game/sim';
@@ -33,6 +34,7 @@ export default function App() {
     <HUD />
     <Guide />
     <Closing />
+    <PortraitStudio />
     <Input />
     <p className="sr">How to play. During the ride, tap the asuras and fireballs that fly towards you. During the battle, tap Narakasura, and tap his glowing marks for more damage. Tap the fire maces he throws to break them. For the final arrow, press and hold anywhere, then release. The space bar fires at the nearest target, holding it draws the final arrow, and Enter continues the story.</p>
   </>);

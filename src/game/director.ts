@@ -201,7 +201,8 @@ function finalPhase() {
   cinematic('banner', { text: 'The final arrow', accent: true }, 1.6);
   audio.chord([146.83, 220, 293.66], 0.25, 5);
 }
-export function beginDraw() { if (gs().scene !== 'final' || gs().drawing) return; gs().set({ drawing: true, finalDraw: 0 }); sim.satya.draw = 0; audio.bowDraw(); cinematic('charge', {}, 60, true); }
+let drawStartedAt = 0;
+export function beginDraw() { if (gs().scene !== 'final' || gs().drawing) return; drawStartedAt = performance.now(); gs().set({ drawing: true, finalDraw: 0 }); sim.satya.draw = 0; audio.bowDraw(); cinematic('charge', {}, 60, true); }
 export function releaseFinal() {
   const s = gs(); if (s.scene !== 'final' || !s.drawing) return; s.set({ drawing: false });
   if (s.finalDraw < 0.75) { prompt('Hold longer, then release', true); s.set({ finalDraw: 0 }); sim.satya.draw = 0; stopCinematic(); return; }
@@ -287,7 +288,7 @@ export function tick(dt: number, raw: number) {
     stompT -= dt;
     if (stompT <= 0) { sim.boss.stompAt = sim.t; stompT = rage ? 6 : 9; later(450, () => { if (gs().scene === 'battle' || gs().scene === 'rage') { audio.stomp(0); shake(0.7); vfx.shockwave(WORLD.bossPos.clone().add(_w.set(0, 0.2, 0)), { color: PALETTE.coral, radius: 30, duration: 1.2 }); vfx.burst(WORLD.bossPos.clone().add(_w.set(0, 0.5, 0)), { kind: 'dust', count: 40, color: '#7a6a62', speed: 8, life: 2.2, size: 2.5, gravity: -0.3 }); } }); }
   }
-  if (scene === 'final' && s.drawing) { const d = Math.min(1, s.finalDraw + raw * 0.55); if (d !== s.finalDraw) s.set({ finalDraw: d }); sim.satya.draw = d; if (d >= 1 && !s.reduceMotion) shake(0.08); }
+  if (scene === 'final' && s.drawing) { const d = Math.min(1, (performance.now() - drawStartedAt) / 1500); if (d !== s.finalDraw) s.set({ finalDraw: d }); sim.satya.draw = d; if (d >= 1 && !s.reduceMotion) shake(0.08); }
   sim.rage += ((s.rage ? 1 : 0) - sim.rage) * Math.min(1, raw * 1.2);
   if (s.flags.dawn) sim.dawn = Math.min(1, (sim.t - s.flags.dawn) / 7);
   if (s.flags.lampsOn) sim.lamps = Math.min(1, (sim.t - s.flags.lampsOn) / 6);
