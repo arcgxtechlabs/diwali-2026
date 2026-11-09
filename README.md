@@ -6,8 +6,10 @@ Pragjyotisha, bring Narakasura down with the final arrow, watch the dawn and the
 light across the land, and finish with a Diwali card in their name, ready to share.
 
 Built with Vite, React, TypeScript, Three.js (react-three-fiber + postprocessing) and
-Remotion for the cinematic sequences. Every character is a fully animated procedural rig;
-every sound is synthesised in the browser; no binary assets are shipped.
+Remotion for the cinematic sequences. The look is **HD-2D**: hand-made pixel sprites standing
+inside a lit, fogged 3D diorama seen from above through a tilt-shift lens (see
+`docs/VISUAL-STYLE.md`). Every sprite and texture is drawn procedurally at start-up; every sound
+is synthesised in the browser; no binary assets are shipped.
 
 ## The story, as the game tells it
 
@@ -59,8 +61,21 @@ npx remotion render video/index.ts title out/title.mp4   # render one sequence
 npm run remotion:render:all                              # render every sequence into out/
 ```
 
+## The look
+
+The visuals are directed with the HD-2D style from the Lemo-Opuscar library of code-made film
+styles (`styles/hd-2d/STYLE.md` there); `docs/VISUAL-STYLE.md` is the treatment for this game.
+In short: sprites step while light glides; every surface is a pixel texture at 24 px/m with a
+Bayer-dithered ramp; one cold moon with shadows against warm practicals (braziers, windows,
+diyas) with a cool front fill on the heroes; strong bloom, a tilt-shift band that follows the
+riders, a heavy vignette and no film grain; Cinzel and Cormorant Garamond type, gold and paper
+white over dark plates. `src/style/` holds the pixel kit (`px.ts`), the pose-table characters
+(`figure.ts`, `cast.ts`) and the set dressing (`set.ts`).
+
 ## Development
 
+* `?sheet=1` (or `?sheet=krishna`, `?sheet=narakasura`, ... with `&zoom=N`) shows the generated
+  sprite atlases at pixel scale, without WebGL, for checking drawings.
 * `?showcase=krishna|satyabhama|narakasura|garuda|foes|city|sky|vfx|party&state=<state>&param=<0..1>`
   renders one component on a turntable with the full post stack.
 * `?scene=battle` (or any scene name) jumps straight to that part of the story.
@@ -71,4 +86,5 @@ npm run remotion:render:all                              # render every sequence
 ## Credits
 
 Story, design and code: Suneel Bose, ArcGX TechLabs. The ArcGX palette and lockup follow the
-brand guidelines. Fonts: Cinzel, Outfit and Inter from Google Fonts.
+brand guidelines. Fonts: Cinzel, Cormorant Garamond, Outfit and Inter from Google Fonts. Visual
+style grammar: the HD-2D style of the Lemo-Opuscar library (MIT / CC BY 4.0).

@@ -13,8 +13,12 @@ src/
   store/       gameStore.ts (zustand: scene, score, flags, UI requests)
   scene/       World.tsx (composition), CameraRig.tsx (shots), Lighting.tsx, PostFX.tsx,
                Sky.tsx, City.tsx, Showcase.tsx (?showcase= mode)
-  characters/  rig.ts (joint rig, materials, chains, ribbons, eyes), clips.ts (shared poses),
-               Krishna.tsx, Satyabhama.tsx, Narakasura.tsx, Garuda.tsx, Foes.tsx
+  style/       px.ts (pixel canvas, Bayer ramps, NearestFilter textures, world UVs, lit billboards
+               with cut-out shadows, glow, pixel fire), figure.ts (pose-table humanoid and Garuda
+               drawers, atlas builder, PixelActor), cast.ts (every character's pose table and atlas),
+               set.ts (wall/roof/street/fort textures, buildings, diya atlas), Sheet.tsx (?sheet= review)
+  characters/  Krishna.tsx, Satyabhama.tsx, Narakasura.tsx, Garuda.tsx, Foes.tsx: pixel sprite actors;
+               rig.ts / clips.ts: the older 3D joint rig (kept for easing helpers and reference)
   vfx/         bus.ts (imperative VFX API), Particles.tsx, Shockwaves.tsx, Projectiles.tsx,
                Diyas.tsx, Floats.tsx
   cinematics/  compositions.tsx (Remotion sequences), Overlay.tsx (in-game Player)
@@ -48,17 +52,21 @@ falls, Satyabhama stands at `WORLD.satyaStandOffset`.
 
 ## Characters
 
-Every character is a procedural rig (`src/characters/rig.ts`): a hierarchy of joint Groups,
-meshes attached to joints, and a per-frame `Pose` that the rig eases toward (quaternion
-slerp). Shared clips live in `clips.ts`. Secondary motion uses `Chain` (verlet) with
-`Ribbon` (cloth strips) or `BeadChain` (braids), and `windy()` cloth materials.
+Every character is an HD-2D pixel sprite (`docs/VISUAL-STYLE.md`). `src/style/figure.ts`
+draws a humanoid pixel by pixel from a `Pose2` (limb angles, view, props) and a `Costume`
+(ramps, bulk); `src/style/cast.ts` lists each character's poses, and `buildAtlas` packs them
+into one strip with a selout outline (Narakasura's alpha carries a noise so a rising alphaTest
+dissolves him). A `PixelActor` is the lit billboard in the world: it picks a frame, faces the
+camera around Y, chooses back or front frames from the camera side, and casts cut-out shadows.
+Animation is stepping between frames (idles at ~1.4 Hz, wing beats at 5–9 fps) while the
+billboard itself glides with the simulation.
 Props: `mode` = `game` (reads sim/store), `portrait` (dialogue avatar bust), `showcase`
-(plays `state`/`param` on a turntable).
+(plays `state`/`param` on a turntable). `rig.ts` keeps the easing helpers the game uses.
 
 ## Showcase and screenshots
 
 `?showcase=krishna&state=aim&param=1` renders a single component with studio lighting
-and the full post stack. `node scripts/screenshot.mjs <url> out.png [waitMs] [WxH]`
+and the full post stack. `?sheet=1` shows the generated sprite atlases without WebGL. `node scripts/screenshot.mjs <url> out.png [waitMs] [WxH]`
 screenshots any URL with headless Chromium (SwiftShader). `?scene=battle` jumps the
 real game to a scene (see `director.jumpTo`).
 

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { World } from '@/scene/World';
 import { Showcase } from '@/scene/Showcase';
+import { Sheet } from '@/style/Sheet';
 import { CinematicOverlay } from '@/cinematics/Overlay';
 import { Intro } from '@/ui/Intro';
 import { Subtitles } from '@/ui/Subtitles';
@@ -22,6 +23,7 @@ export default function App() {
   const scene = useGameStore((s) => s.scene); const set = useGameStore((s) => s.set);
   useEffect(() => { set({ quality: detectQuality() }); window.__diwali = { director, sim, store: useGameStore }; const jump = params.get('scene') as Scene | null; if (jump) setTimeout(() => director.jumpTo(jump, params.get('name') || 'Suneel'), 300); // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  if (params.get('sheet')) return <Sheet zoom={Number(params.get('zoom') || 4)} only={params.get('sheet') === '1' ? undefined : params.get('sheet')!} />;
   if (showcase) return <Showcase name={showcase} state={params.get('state') || undefined} param={Number(params.get('param') || 0)} />;
   const bars = ['title', 'prologue', 'mount', 'preboss', 'fall', 'victory', 'dawn'].includes(scene);
   return (<>

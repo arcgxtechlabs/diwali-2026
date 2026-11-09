@@ -7,7 +7,7 @@ import { ThreeCanvas } from '@remotion/three';
 import { AbsoluteFill, Sequence, useCurrentFrame, useVideoConfig, useRemotionEnvironment, delayRender, continueRender } from 'remotion';
 import { useFrame, useThree } from '@react-three/fiber';
 import { Suspense, useEffect, useRef } from 'react';
-import { PCFSoftShadowMap, Vector3 } from 'three';
+import { PCFShadowMap, Vector3 } from 'three';
 import { Sky } from '../src/scene/Sky';
 import { City } from '../src/scene/City';
 import { Lighting } from '../src/scene/Lighting';
@@ -120,7 +120,7 @@ function FinalAdvance() {
 function Film() {
   const { width, height } = useVideoConfig();
   return (
-    <ThreeCanvas width={width} height={height} dpr={1} shadows={{ type: PCFSoftShadowMap }} gl={{ antialias: false, powerPreference: 'high-performance', stencil: false, preserveDrawingBuffer: true }} camera={{ fov: 46, near: 0.1, far: 900, position: [0, 10, 40] }} style={{ background: '#081A24' }}>
+    <ThreeCanvas width={width} height={height} dpr={1} shadows={{ type: PCFShadowMap }} gl={{ antialias: false, powerPreference: 'high-performance', stencil: false, preserveDrawingBuffer: true }} camera={{ fov: 46, near: 0.1, far: 900, position: [0, 10, 40] }} style={{ background: '#081A24' }}>
       <Suspense fallback={null}>
         <TrailerClock />
         <Sky /><Lighting quality="ultra" /><City /><Diyas /><GarudaParty /><Boss /><Foes /><Projectiles /><Shockwaves /><Particles />

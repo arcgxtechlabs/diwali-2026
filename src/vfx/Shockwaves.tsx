@@ -1,4 +1,4 @@
-/** PLACEHOLDER expanding rings for impacts and stomps. Subscribes to vfx.shockwave. */
+/** Expanding octagonal rings for impacts and stomps (the pixel grammar: hard edges). Subscribes to vfx.shockwave. */
 import { useFrame } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
 import { AdditiveBlending, Color, DoubleSide, InstancedMesh, Object3D, Vector3 } from 'three';
@@ -14,5 +14,5 @@ export function Shockwaves() {
     for (let i = list.length - 1; i >= 0; i--) { const w = list[i]; w.t += sim.dt; const k = w.t / w.dur; if (k >= 1) { list.splice(i, 1); continue; } if (n >= 32) continue; dummy.position.copy(w.pos); dummy.quaternion.copy(camera.quaternion); dummy.scale.setScalar(w.radius * (0.1 + 0.9 * (1 - Math.pow(1 - k, 2)))); dummy.updateMatrix(); m.setMatrixAt(n, dummy.matrix); m.setColorAt(n, w.color.clone().multiplyScalar(1 - k)); n++; }
     m.count = n; m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true;
   });
-  return <instancedMesh ref={ref} args={[undefined, undefined, 32]} frustumCulled={false}><ringGeometry args={[0.86, 1, 48]} /><meshBasicMaterial color="#fff" transparent opacity={0.8} blending={AdditiveBlending} depthWrite={false} side={DoubleSide} /></instancedMesh>;
+  return <instancedMesh ref={ref} args={[undefined, undefined, 32]} frustumCulled={false}><ringGeometry args={[0.84, 1, 8]} /><meshBasicMaterial color="#fff" transparent opacity={0.55} blending={AdditiveBlending} depthWrite={false} side={DoubleSide} /></instancedMesh>;
 }

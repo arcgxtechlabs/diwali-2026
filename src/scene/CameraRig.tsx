@@ -19,21 +19,21 @@ function shot(name: CameraShot, t: number, since: number, out: ShotResult, portr
   const g = _g.copy(sim.garuda.pos), boss = _b.copy(WORLD.bossPos); const wide = portrait ? 1.35 : 1;
   out.rate = 2.2; out.roll = 0; out.fov = 50 * wide;
   switch (name) {
-    case 'intro': out.pos.set(Math.sin(t * 0.05) * 6, 12 + Math.sin(t * 0.08) * 1.5, 40); out.look.set(0, 4 + Math.sin(t * 0.07) * 2, -60); out.fov = 46 * wide; out.rate = 0.6; break;
+    case 'intro': out.pos.set(Math.sin(t * 0.05) * 6, 16 + Math.sin(t * 0.08) * 1.5, 40); out.look.set(0, 1 + Math.sin(t * 0.07) * 2, -60); out.fov = 44 * wide; out.rate = 0.6; break;   // high and far: the city as a map
     case 'title': { const k = Math.min(1, since / 9); out.pos.set(-18 + k * 30, 16 - k * 6, 30 - k * 20); out.look.set(0, 2, -80); out.fov = 42 * wide; out.rate = 0.5; break; }
     case 'prologue': { const k = smooth(Math.min(1, since / 14)); out.pos.set(10 - k * 6, 10 - k * 3, 20 - k * 10); out.look.set(0, 6 + k * 4, -40); out.fov = (40 - k * 6) * wide; out.rate = 0.7; break; }
-    case 'mount': { const a = since * 0.25 - 0.8; const r = 5.5; out.pos.set(g.x + Math.sin(a) * r, g.y + 1.6 + Math.sin(since * 0.3) * 0.3, g.z + Math.cos(a) * r); out.look.copy(g).add(_arrow.set(0, 0.9, 0)); out.fov = 40 * wide; out.rate = 1.4; break; }
-    case 'ride': { const sway = Math.sin(t * 0.7) * 0.5; out.pos.set(g.x + 2.4 + sway, g.y + 1.5, g.z + 7.5); out.look.set(g.x * 0.4, g.y + 0.2, g.z - 12); out.fov = 56 * wide; out.rate = 3; out.roll = -sim.garuda.bank * 0.5; break; }
-    case 'gates': out.pos.set(g.x + 3.5, g.y + 0.6, g.z + 6.5); out.look.set(0, 2, -36); out.fov = 44 * wide; out.rate = 1.2; break;
-    case 'bossEnter': { const k = smooth(Math.min(1, since / 4)); out.pos.set(-6 + k * 4, -0.5 + k * 1.2, -18 + k * 2); out.look.copy(boss).add(_arrow.set(0, 6.5 + k * 1.5, 0)); out.fov = (34 + k * 4) * wide; out.rate = 1.1; break; }
-    case 'battle': { const sway = Math.sin(t * 0.4) * 0.4; out.pos.set(g.x + 2.6 + sway, g.y + 1.9, g.z + 6.5); out.look.copy(boss).add(_arrow.set(0, 5.6, 0)).lerp(g, 0.25); out.fov = 52 * wide; out.rate = 2.5; break; }
+    case 'mount': { const a = since * 0.25 - 0.8; const r = 7; out.pos.set(g.x + Math.sin(a) * r, g.y + 3.6 + Math.sin(since * 0.3) * 0.3, g.z + Math.cos(a) * r); out.look.copy(g).add(_arrow.set(0, 0.6, 0)); out.fov = 38 * wide; out.rate = 1.4; break; }   // medium-high 3/4 orbit
+    case 'ride': { const sway = Math.sin(t * 0.7) * 0.5; out.pos.set(g.x + 2.2 + sway, g.y + 4.2, g.z + 9.5); out.look.set(g.x * 0.4, g.y - 1.4, g.z - 14); out.fov = 52 * wide; out.rate = 3; out.roll = -sim.garuda.bank * 0.5; break; }   // chase cam looking down on the riders
+    case 'gates': out.pos.set(g.x + 9, g.y + 10, g.z + 16); out.look.set(0, 1, -38); out.fov = 40 * wide; out.rate = 1.2; break;   // very high, very far: the band on the tiny riders before the gate
+    case 'bossEnter': { const k = smooth(Math.min(1, since / 4)); out.pos.set(-8 + k * 5, 6 + k * 2.5, -14 + k * 2); out.look.copy(boss).add(_arrow.set(0, 5.5 + k * 1.2, 0)); out.fov = (36 + k * 4) * wide; out.rate = 1.1; break; }
+    case 'battle': { const sway = Math.sin(t * 0.4) * 0.4; out.pos.set(g.x + 3 + sway, g.y + 4.4, g.z + 8); out.look.copy(boss).add(_arrow.set(0, 4.6, 0)).lerp(g, 0.3); out.fov = 50 * wide; out.rate = 2.5; break; }   // medium-high 3/4 over Garuda's shoulder
     case 'fall': { const k = easeInOut(Math.min(1, since / 2.5)); out.pos.set(g.x - 1.8 + k * 0.6, g.y + 1.4, g.z + 2.6 - k * 0.4); out.look.copy(g).add(_arrow.set(0, 0.7, -0.2)); out.fov = (36 - k * 6) * wide; out.rate = 2; break; }
     case 'rise': { const k = easeInOut(Math.min(1, since / 3)); out.pos.set(g.x - 2.6 + k * 0.4, g.y + 1.3 + k * 0.6, g.z + 3.2); out.look.copy(g).add(WORLD.satyaStandOffset).add(_arrow.set(0, 1.2, 0)); out.fov = (38 - k * 4) * wide; out.rate = 1.6; break; }
     case 'final': { const d = gs().finalDraw; out.pos.set(g.x + 1.3 - d * 0.5, g.y + 1.9 + d * 0.2, g.z + 3.4 - d * 1.2); out.look.copy(boss).add(_arrow.set(0, 6.3, 0)); out.fov = (48 - d * 18) * wide; out.rate = 3.5; break; }
     case 'arrow': { const a = sim.arrows.find((x) => x.big); if (a) { out.pos.copy(a.pos).add(_arrow.set(1.6, 0.9, 4.2)); out.look.copy(a.pos).add(_arrow.set(0, 0, -6)); } else { out.pos.copy(boss).add(_arrow.set(6, 8, 10)); out.look.copy(boss).add(_arrow.set(0, 6, 0)); } out.fov = 60 * wide; out.rate = 8; break; }
-    case 'death': { const k = Math.min(1, since / 6); out.pos.set(boss.x + 14 - k * 4, boss.y + 5 + k * 4, boss.z + 22); out.look.copy(boss).add(_arrow.set(0, 5 - k * 2, 0)); out.fov = 44 * wide; out.rate = 0.9; break; }
+    case 'death': { const k = Math.min(1, since / 6); out.pos.set(boss.x + 14 - k * 4, boss.y + 12 + k * 6, boss.z + 24); out.look.copy(boss).add(_arrow.set(0, 4 - k * 2, 0)); out.fov = 42 * wide; out.rate = 0.9; break; }
     case 'dawn': { const k = smooth(Math.min(1, since / 14)); out.pos.set(g.x - 6 + k * 2, g.y + 3 + k * 14, g.z + 10 + k * 6); out.look.set(0, 2 + k * 2, -80); out.fov = (50 + k * 8) * wide; out.rate = 0.6; break; }
-    case 'finale': out.pos.set(Math.sin(t * 0.08) * 3, 6 + Math.sin(t * 0.1), 18); out.look.set(0, 12, -60); out.fov = 58 * wide; out.rate = 0.5; break;
+    case 'finale': out.pos.set(Math.sin(t * 0.08) * 3, 14 + Math.sin(t * 0.1), 22); out.look.set(0, 9, -60); out.fov = 56 * wide; out.rate = 0.5; break;
     case 'showcase': { const r = 4.5; out.pos.set(Math.sin(t * 0.35) * r, 1.6, Math.cos(t * 0.35) * r); out.look.set(0, 1.1, 0); out.fov = 38 * wide; out.rate = 20; break; }
   }
   return out;

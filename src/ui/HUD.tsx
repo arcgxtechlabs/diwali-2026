@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useGameStore } from '@/store/gameStore';
 import { director, fmt } from '@/game/director';
 import { audio } from '@/audio/engine';
@@ -9,6 +9,7 @@ export function HUD() {
   const bossHp = useGameStore((s) => s.bossHp); const scene = useGameStore((s) => s.scene); const rage = useGameStore((s) => s.rage);
   const prompt = useGameStore((s) => s.prompt); const toast = useGameStore((s) => s.toast);
   const [muted, setMuted] = useState(false);
+  const lastPrompt = useRef(''); if (prompt?.text) lastPrompt.current = prompt.text;   // keep the words while the plate fades out
   const bossOn = scene === 'battle' || scene === 'rage' || scene === 'final';
   return (<>
     <div id="hud" className={hud ? 'on' : ''} aria-live="polite">
@@ -19,7 +20,7 @@ export function HUD() {
       <button className="ghost chip" id="skip" type="button" onClick={() => director.skip()}>Skip to the ending</button>
     </div>
     <div id="boss" className={`${bossOn ? 'on' : ''}${rage ? ' rage' : ''}`} aria-live="polite"><p>Narakasura</p><div className="track"><div className="fill" style={{ width: `${bossHp}%` }} /></div></div>
-    <div id="prompt" className={`${prompt ? 'on' : ''}${prompt?.hot ? ' hot' : ''}`} aria-live="polite">{prompt?.text || ''}</div>
+    <div id="prompt" className={`${prompt ? 'on' : ''}${prompt?.hot ? ' hot' : ''}`} aria-live="polite">{prompt?.text || lastPrompt.current}</div>
     <button id="sound" className={scene === 'name' ? '' : 'on'} type="button" aria-label={muted ? 'Turn sound on' : 'Mute sound'} aria-pressed={muted} onClick={() => setMuted(audio.toggle())}>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5Z" /><path style={{ opacity: muted ? 0 : 1 }} d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14" /></svg>
     </button>

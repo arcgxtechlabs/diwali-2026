@@ -1,33 +1,39 @@
 /**
- * PLACEHOLDER Satyabhama. The character builder replaces this with the full rig.
+ * Satyabhama as an HD-2D pixel sprite (pose table in src/style/cast.ts).
  * Contract: renders at the parent's origin, feet at y=0, facing -Z, about 1.7 m tall.
- * Game mode reads: gs().scene, gs().flags.satyaRise, sim.satya.{draw, shotAt, standing, lookAt}, gs().finalDraw.
- * Showcase states: idle, ride, rise, stand, aim, draw (param = draw), shoot, victory, portrait.
+ * Game mode reads: gs().scene, gs().flags.satyaRise / dawn, sim.satya.{draw, shotAt}, gs().finalDraw, the camera side.
+ * Showcase states: idle, ride, rise (param), stand, aim / draw (param), shoot, victory, portrait.
  */
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import { useMemo } from 'react';
-import { Rig, humanoid, capsule, sphere, mats } from './rig';
-import * as clips from './clips';
+import { PixelActor } from '@/style/figure';
+import { satyabhamaAtlas, idleFrame } from '@/style/cast';
 import type { CharacterProps } from './types';
 import { sim } from '@/game/sim';
 import { gs } from '@/store/gameStore';
 
+const SEATED_SCENES = new Set(['mount', 'ride', 'preboss', 'battle', 'fall']);
 export function Satyabhama({ mode = 'game', state = 'idle', param = 0 }: CharacterProps) {
-  const rig = useMemo(() => {
-    const r = new Rig(); const p = humanoid(r, { height: 1.7, shoulder: 0.19 });
-    const skin = mats.skin('#B9774F'), cloth = mats.silk('#C2423A');
-    r.get('pelvis').add(capsule(0.16, 0.3, cloth)); r.get('chest').add(capsule(0.17, 0.38, cloth)); r.get('head').add(sphere(0.12, skin));
-    for (const s of ['L', 'R']) { r.get('shoulder' + s).add(capsule(0.05, p.armUpper, skin)); r.get('elbow' + s).add(capsule(0.045, p.armLower, skin)); r.get('hip' + s).add(capsule(0.08, p.legUpper, cloth)); r.get('knee' + s).add(capsule(0.06, p.legLower, cloth)); }
-    r.target(clips.idle(0)); r.snap(); return r;
-  }, []);
+  const actor = useMemo(() => { const a = new PixelActor(satyabhamaAtlas(), { shadowR: 0.4 }); a.facing = -1; return a; }, []);
+  const { camera } = useThree();
   useFrame(() => {
-    const t = sim.t; let pose = clips.idle(t);
+    const t = sim.t; let frame = idleFrame(t, ['idle0', 'idle1'], 'blink'); let seated = false;
+    const back = actor.seesBack(camera);
+    const aimFrame = (d: number) => `aim${Math.min(3, Math.floor(d * 3.99))}`;
     if (mode === 'game') {
       const s = gs();
-      if (s.flags.satyaRise) { const k = Math.min(1, (t - s.flags.satyaRise) / 1.6); pose = k < 1 ? clips.rise(k) : clips.addPose(clips.heroStand(t), clips.aim(s.scene === 'final' || s.scene === 'victory' ? s.finalDraw : sim.satya.draw)); }
-      else if (['mount', 'ride', 'preboss', 'battle', 'fall'].includes(s.scene)) pose = clips.ride(t, sim.garuda.hover ? 0.2 : 1);
-    } else if (mode === 'showcase') { if (state === 'ride') pose = clips.ride(t); else if (state === 'rise') pose = clips.rise(param); else if (state === 'aim' || state === 'draw') pose = clips.addPose(clips.heroStand(t), clips.aim(param)); else if (state === 'victory') pose = clips.victory(t); }
-    rig.apply(pose, sim.raw || 0.016);
+      if (s.flags.dawn) frame = 'victory';
+      else if (s.flags.satyaRise) {
+        const k = (t - s.flags.satyaRise) / 1.6;
+        if (k < 0.5) frame = 'rise0'; else if (k < 1) frame = 'rise1';
+        else { const d = s.scene === 'final' || s.scene === 'victory' ? s.finalDraw : sim.satya.draw, shot = t - sim.satya.shotAt; if (shot >= 0 && shot < 0.22) frame = 'shoot'; else if (d > 0.05) frame = aimFrame(d); else frame = idleFrame(t, ['stand0', 'stand1']); }
+      } else if (SEATED_SCENES.has(s.scene)) { seated = true; frame = back ? idleFrame(t, ['ride0', 'ride1']) : idleFrame(t, ['rideF0', 'rideF1']); }
+    } else if (mode === 'showcase') {
+      if (state === 'ride') { seated = true; frame = idleFrame(t, ['ride0', 'ride1']); } else if (state === 'rise') frame = param < 0.5 ? 'rise0' : 'rise1'; else if (state === 'stand') frame = idleFrame(t, ['stand0', 'stand1']);
+      else if (state === 'aim' || state === 'draw') frame = aimFrame(param); else if (state === 'shoot') frame = 'shoot'; else if (state === 'victory') frame = 'victory'; else if (state === 'portrait') frame = 'portrait';
+    } else frame = idleFrame(t, ['portrait', 'portrait'], 'blink');
+    actor.frame(frame); actor.face(camera);
+    actor.mesh.position.y = seated ? -0.52 : 0; actor.shadow.visible = !seated && mode !== 'portrait';
   });
-  return <primitive object={rig.root} />;
+  return <primitive object={actor.root} />;
 }

@@ -1,28 +1,29 @@
 /**
- * PLACEHOLDER enemies: renders sim.foes (asuras on fire-wings and fireballs) each frame.
- * The enemy builder replaces this with animated flying asuras (wings, mace, glowing eyes,
- * death burst) and roaring fireballs with trailing fire. Must handle up to ~24 foes, dead ones for 0.8 s (f.dying timestamp).
+ * Enemies as HD-2D pixel sprites: asuras on ember wings (a three-frame wing beat, glowing eyes,
+ * dissolve on death) and fireballs (the pixel flame atlas with a halo). Renders sim.foes each frame
+ * from a pool of 40; dead foes linger 0.8 s (f.dying) while they dissolve.
  */
-import { useFrame } from '@react-three/fiber';
-import { useMemo, useRef } from 'react';
-import { InstancedMesh, Object3D, Color } from 'three';
+import { useFrame, useThree } from '@react-three/fiber';
+import { useMemo } from 'react';
+import { Group } from 'three';
+import { PixelActor } from '@/style/figure';
+import { asuraAtlas, cycle } from '@/style/cast';
+import { fire, glow, flick } from '@/style/px';
 import { sim } from '@/game/sim';
 
-const MAX = 40;
+const MAX = 24;
 export function Foes() {
-  const asuras = useRef<InstancedMesh>(null!), fires = useRef<InstancedMesh>(null!);
-  const dummy = useMemo(() => new Object3D(), []);
+  const asuras = useMemo(() => Array.from({ length: MAX }, () => { const a = new PixelActor(asuraAtlas(), { shadowR: 0.5, emI: 2 }); a.facing = 1; a.shadow.visible = false; a.root.visible = false; return a; }), []);
+  const fires = useMemo(() => Array.from({ length: MAX }, (_, i) => { const g = new Group(); const f = fire(2.6, { seed: i * 7, i: 3 }); f.position.y = -1.3; g.add(f); const h = glow('#ff8c3a', 4, 1.1); g.add(h); g.visible = false; return { g, f, h }; }), []);
+  const { camera } = useThree();
   useFrame(() => {
-    let a = 0, f = 0;
+    let a = 0, f = 0; const t = sim.t;
     for (const foe of sim.foes) {
-      const m = foe.kind === 'fire' ? fires.current : asuras.current; if (!m) continue; const i = foe.kind === 'fire' ? f++ : a++;
-      const sc = foe.dead ? Math.max(0, 1 - (sim.t - foe.dying) / 0.3) : 1;
-      dummy.position.copy(foe.pos); dummy.scale.setScalar(foe.r * sc); dummy.rotation.set(0, sim.t * 4 + foe.phase, 0); dummy.updateMatrix(); m.setMatrixAt(i, dummy.matrix);
+      const dying = foe.dead ? Math.min(1, (t - foe.dying) / 0.6) : 0;
+      if (foe.kind === 'asura') { if (a >= MAX) continue; const A = asuras[a++]; A.root.visible = true; A.root.position.copy(foe.pos); A.root.position.y -= 0.9 * foe.r / 1.6; A.root.scale.setScalar(foe.r / 1.6); A.frame(`fly${cycle(t + foe.phase, 9, 3)}`); A.face(camera); A.dissolve(dying); A.hurt(dying > 0 ? 1 - dying : 0); }
+      else { if (f >= MAX) continue; const F = fires[f++]; F.g.visible = true; F.g.position.copy(foe.pos); const k = (1 - dying) * foe.r / 1.1 * flick(t, foe.phase); F.f.userData.update?.(t + foe.phase, { x: camera.position.x, z: camera.position.z }, k); F.h.scale.setScalar(4 * k); }
     }
-    if (asuras.current) { asuras.current.count = a; asuras.current.instanceMatrix.needsUpdate = true; } if (fires.current) { fires.current.count = f; fires.current.instanceMatrix.needsUpdate = true; }
+    for (let i = a; i < MAX; i++) asuras[i].root.visible = false; for (let i = f; i < MAX; i++) fires[i].g.visible = false;
   });
-  return (<group>
-    <instancedMesh ref={asuras} args={[undefined, undefined, MAX]} frustumCulled={false}><octahedronGeometry args={[1, 0]} /><meshStandardMaterial color="#1a0d12" emissive={new Color('#FF8071')} emissiveIntensity={0.8} /></instancedMesh>
-    <instancedMesh ref={fires} args={[undefined, undefined, MAX]} frustumCulled={false}><sphereGeometry args={[1, 12, 8]} /><meshStandardMaterial color="#FFC15A" emissive={new Color('#FF6A2A')} emissiveIntensity={3} /></instancedMesh>
-  </group>);
+  return (<group>{asuras.map((A, i) => <primitive key={'a' + i} object={A.root} />)}{fires.map((F, i) => <primitive key={'f' + i} object={F.g} />)}</group>);
 }

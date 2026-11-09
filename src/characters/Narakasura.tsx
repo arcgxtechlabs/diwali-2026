@@ -1,41 +1,42 @@
 /**
- * PLACEHOLDER Narakasura. The character builder replaces this with the full rig.
+ * Narakasura as an HD-2D pixel sprite, 9.5 m tall (pose table in src/style/cast.ts).
  * Contract: renders at the parent's origin, feet at y=0, facing +Z (toward the camera and Garuda),
- * WORLD.BOSS_HEIGHT (9.5 m) tall at scale 1. Hit volumes are in game/world.ts BOSS_HITBOXES.
- * Game mode reads: gs().flags.bossEnter (walk out of the smoke), sim.boss.{hurt, swingAt, roarAt, stompAt, throwAt, dissolve, hp}.
+ * WORLD.BOSS_HEIGHT tall at scale 1. Hit volumes are in game/world.ts BOSS_HITBOXES.
+ * Game mode reads: gs().flags.bossEnter (walk out of the smoke), sim.boss.{hurt, swing, roarAt, stompAt, throwAt, dissolve}.
  * Showcase states: idle, roar, swing (param), throw (param), stomp (param), hurt, death (param = dissolve), portrait.
  */
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import { useMemo } from 'react';
-import { Rig, humanoid, capsule, sphere, mats, DEG } from './rig';
-import * as clips from './clips';
+import { PixelActor } from '@/style/figure';
+import { narakasuraAtlas, idleFrame } from '@/style/cast';
+import { glow } from '@/style/px';
 import type { CharacterProps } from './types';
 import { sim } from '@/game/sim';
-import { WORLD } from '@/game/world';
+import { gs } from '@/store/gameStore';
 
 export function Narakasura({ mode = 'game', state = 'idle', param = 0 }: CharacterProps) {
-  const rig = useMemo(() => {
-    const r = new Rig(); const p = humanoid(r, { height: WORLD.BOSS_HEIGHT, shoulder: 0.26, hip: 0.12 });
-    const skin = mats.skin('#2a1a22'), eye = mats.emissive('#FF8071', 3);
-    r.get('pelvis').add(capsule(0.17 * 5.3, 0.3 * 5.3, skin)); r.get('chest').add(capsule(0.2 * 5.3, 0.42 * 5.3, skin)); const head = sphere(0.14 * 5.3, skin); r.get('head').add(head);
-    const eL = sphere(0.12, eye); eL.position.set(0.25, 0.1, 0.65); head.add(eL); const eR = sphere(0.12, eye); eR.position.set(-0.25, 0.1, 0.65); head.add(eR);
-    for (const s of ['L', 'R']) { r.get('shoulder' + s).add(capsule(0.07 * 5.3, p.armUpper, skin)); r.get('elbow' + s).add(capsule(0.06 * 5.3, p.armLower, skin)); r.get('hip' + s).add(capsule(0.09 * 5.3, p.legUpper, skin)); r.get('knee' + s).add(capsule(0.07 * 5.3, p.legLower, skin)); }
-    r.root.rotation.y = Math.PI; r.target(clips.idle(0)); r.snap(); return r;
-  }, []);
+  const actor = useMemo(() => { const a = new PixelActor(narakasuraAtlas(), { shadowR: 2.6, emI: 2.2 }); a.facing = 1; return a; }, []);
+  const eyeGlow = useMemo(() => glow('#ff5a3a', 2.4, 0.8), []);
+  const { camera } = useThree();
   useFrame(() => {
-    const t = sim.t; let pose = clips.idle(t, 2);
-    const roar = mode === 'game' ? Math.min(1, Math.max(0, (t - sim.boss.roarAt) / 1.6)) : state === 'roar' ? 0.5 : 1;
-    if (roar < 1) pose = clips.addPose(pose, { chest: [-0.35, 0, 0], head: [-0.5, 0, 0], shoulderL: [-1.2, 0, -1.2], shoulderR: [-1.2, 0, 1.2] }, Math.sin(roar * Math.PI));
-    const swing = mode === 'game' ? sim.boss.swing : state === 'swing' ? param : 0;
-    if (swing > 0) pose = clips.addPose(pose, { shoulderR: [-2.2 + swing * 2.5, 0, 0.8], elbowR: [0, 0, 0.6], chest: [0.3 * (1 - swing), 0.3, 0] }, 1);
-    const dissolve = mode === 'game' ? sim.boss.dissolve : state === 'death' ? param : 0;
-    if (dissolve > 0) pose = clips.addPose(pose, { pelvis: { rot: [0.9, 0, 0], pos: [0, -2.5 * 5.3 * 0.1, 0] }, hipL: [-1.5, 0, 0], hipR: [-1.5, 0, 0], kneeL: [2, 0, 0], kneeR: [2, 0, 0], head: [0.6, 0, 0] }, Math.min(1, dissolve * 2));
-    rig.apply(pose, sim.raw || 0.016);
-    rig.root.visible = dissolve < 1;
-    if (mode === 'game') { const ent = Math.min(1, (t - (gsFlags().bossEnter || t)) / 2.5); rig.root.position.z = (1 - ent) * -12; }
+    const t = sim.t; let frame = idleFrame(t, ['idle0', 'idle1']); let dissolve = 0, hurt = 0;
+    if (mode === 'game') {
+      const b = sim.boss; dissolve = b.dissolve; hurt = Math.min(1, b.hurt * 4);
+      const roar = t - b.roarAt, stomp = t - b.stompAt, thr = t - b.throwAt;
+      if (dissolve > 0) frame = dissolve < 0.35 ? 'death0' : 'death1';
+      else if (roar >= 0 && roar < 1.6) frame = 'roar';
+      else if (b.swing > 0) frame = b.swing > 0.66 ? 'swing0' : b.swing > 0.33 ? 'swing1' : 'swing2';
+      else if (thr >= 0 && thr < 0.8) frame = thr < 0.35 ? 'throw0' : 'throw1';
+      else if (stomp >= 0 && stomp < 0.9) frame = stomp < 0.45 ? 'stomp0' : 'stomp1';
+      else if (b.hurt > 0.12) frame = 'hurt';
+      const ent = Math.min(1, (t - (gs().flags.bossEnter || t)) / 2.5); actor.root.position.z = (1 - ent) * -12;
+    } else if (mode === 'showcase') {
+      if (state === 'roar') frame = 'roar'; else if (state === 'swing') frame = param < 0.33 ? 'swing0' : param < 0.66 ? 'swing1' : 'swing2'; else if (state === 'throw') frame = param < 0.5 ? 'throw0' : 'throw1';
+      else if (state === 'stomp') frame = param < 0.5 ? 'stomp0' : 'stomp1'; else if (state === 'hurt') { frame = 'hurt'; hurt = 1; } else if (state === 'death') { dissolve = param; frame = param < 0.35 ? 'death0' : 'death1'; }
+    }
+    actor.frame(frame); actor.face(camera); actor.dissolve(dissolve); actor.hurt(hurt);
+    eyeGlow.position.set(0, 8.3, 0.4); eyeGlow.visible = dissolve < 0.5 && frame !== 'death1'; (eyeGlow.material as { opacity: number }).opacity = 0.6 + 0.4 * Math.sin(t * 6);
+    actor.shadow.visible = dissolve < 0.8;
   });
-  return <primitive object={rig.root} />;
+  return (<group><primitive object={actor.root} /><primitive object={eyeGlow} /></group>);
 }
-import { gs } from '@/store/gameStore';
-const gsFlags = () => gs().flags;
-export const _unusedDEG = DEG;

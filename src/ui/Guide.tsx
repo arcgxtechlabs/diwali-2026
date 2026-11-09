@@ -28,12 +28,13 @@ export function Guide() {
   return (
     <section id="guide" className={talk ? 'on' : ''} aria-live="polite" aria-label="Your companions">
       <div className="avatar" id="avatar">
-        {talk && <Canvas dpr={[1, 2]} camera={{ fov: 28, position: [0, 1.55, 1.9] }} gl={{ antialias: true, alpha: true }} style={{ background: 'transparent' }}>
-          <ambientLight intensity={0.6} /><directionalLight position={[2, 3, 2]} intensity={2.4} color="#fff2d8" /><directionalLight position={[-2, 2, -1]} intensity={1.2} color="#0CC1E0" />
-          <group position={[0, 0, 0]}>{who === 'Krishna' ? <Krishna mode="portrait" /> : <Satyabhama mode="portrait" />}</group>
+        {talk && <Canvas dpr={[1, 2]} camera={{ fov: 24, position: [0, 0.12, 2.0] }} gl={{ antialias: false, alpha: true }} style={{ background: 'transparent' }}>
+          <ambientLight intensity={0.9} /><directionalLight position={[2, 2, 3]} intensity={2.2} color="#fff2d8" /><pointLight position={[0.6, 0.2, 1.4]} intensity={3} color="#ffc15a" distance={6} decay={2} />
+          <group position={[0, -1.42, 0]}>{who === 'Krishna' ? <Krishna mode="portrait" /> : <Satyabhama mode="portrait" />}</group>
         </Canvas>}
       </div>
-      <div className="speech" id="speech" onClick={advance}>
+      <div className="speech plate" id="speech" onClick={advance}>
+        <span className="corner" aria-hidden="true" />
         <p className="who">{who}</p>
         <p className="line">{shown}</p>
         <div className="row"><span className="step">{talk ? `${i + 1} of ${talk.lines.length}` : ''}</span><button className="btn" type="button" onClick={(e) => { e.stopPropagation(); advance(); }}>{last ? (talk?.label || 'Continue') : 'Next'}</button></div>

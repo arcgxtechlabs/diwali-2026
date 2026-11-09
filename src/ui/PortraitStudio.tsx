@@ -23,9 +23,9 @@ export function PortraitStudio() {
   if (!who) return null;
   return (
     <div style={{ position: 'fixed', left: -2000, top: 0, width: 512, height: 512, pointerEvents: 'none', opacity: 0.01 }} aria-hidden="true">
-      <Canvas dpr={1} camera={{ fov: 28, position: [0, 1.55, 1.9] }} gl={{ antialias: true, alpha: true, preserveDrawingBuffer: true }} style={{ width: 512, height: 512 }}>
-        <ambientLight intensity={0.7} /><directionalLight position={[2, 3, 2]} intensity={2.6} color="#fff2d8" /><directionalLight position={[-2, 2, -1]} intensity={1.4} color="#0CC1E0" /><pointLight position={[0, 1.6, 1]} intensity={6} color="#FFC15A" />
-        {who === 'Krishna' ? <Krishna mode="portrait" /> : <Satyabhama mode="portrait" />}
+      <Canvas dpr={1} camera={{ fov: 24, position: [0, 0.12, 2.0] }} gl={{ antialias: true, alpha: true, preserveDrawingBuffer: true }} style={{ width: 512, height: 512 }}>
+        <ambientLight intensity={0.9} /><directionalLight position={[2, 2, 3]} intensity={2.4} color="#fff2d8" /><pointLight position={[0.6, 0.2, 1.4]} intensity={4} color="#FFC15A" distance={6} decay={2} />
+        <group position={[0, -1.42, 0]}>{who === 'Krishna' ? <Krishna mode="portrait" /> : <Satyabhama mode="portrait" />}</group>
         <Grabber onDone={(url) => { const r = pending.current; pending.current = null; setWho(null); r?.(url); }} />
       </Canvas>
     </div>

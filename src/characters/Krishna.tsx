@@ -1,30 +1,39 @@
 /**
- * PLACEHOLDER Krishna. The character builder replaces this with the full rig.
+ * Krishna as an HD-2D pixel sprite (src/style/cast.ts holds the pose table).
  * Contract: renders at the parent's origin, feet at y=0, facing -Z, about 1.8 m tall.
- * Game mode reads: gs().scene, gs().flags.krishnaDown, sim.krishna.{draw, shotAt, hitAt, lookAt}, sim.garuda.hover.
- * Showcase states: idle, ride, aim, shoot, hit, fallen, portrait, victory.
+ * Game mode reads: gs().scene, gs().flags.krishnaDown / dawn, sim.krishna.{draw, shotAt}, the camera side.
+ * Showcase states: idle, ride, aim (param = draw), shoot, fallen, portrait, victory.
  */
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import { useMemo } from 'react';
-import { Rig, humanoid, capsule, sphere, mats } from './rig';
-import * as clips from './clips';
+import { PixelActor } from '@/style/figure';
+import { krishnaAtlas, idleFrame } from '@/style/cast';
 import type { CharacterProps } from './types';
 import { sim } from '@/game/sim';
 import { gs } from '@/store/gameStore';
 
+const SEATED_SCENES = new Set(['mount', 'ride', 'preboss', 'battle', 'fall', 'rage', 'final', 'victory']);
 export function Krishna({ mode = 'game', state = 'idle', param = 0 }: CharacterProps) {
-  const rig = useMemo(() => {
-    const r = new Rig(); const p = humanoid(r, { height: 1.8 });
-    const skin = mats.skin('#4A7BD8'), cloth = mats.silk('#F2B33D');
-    r.get('pelvis').add(capsule(0.17, 0.3, cloth)); r.get('chest').add(capsule(0.19, 0.4, skin)); r.get('head').add(sphere(0.13, skin));
-    for (const s of ['L', 'R']) { r.get('shoulder' + s).add(capsule(0.06, p.armUpper, skin)); r.get('elbow' + s).add(capsule(0.05, p.armLower, skin)); r.get('hip' + s).add(capsule(0.085, p.legUpper, cloth)); r.get('knee' + s).add(capsule(0.065, p.legLower, skin)); }
-    r.target(clips.idle(0)); r.snap(); return r;
-  }, []);
+  const actor = useMemo(() => { const a = new PixelActor(krishnaAtlas(), { shadowR: 0.42 }); a.facing = -1; return a; }, []);
+  const { camera } = useThree();
   useFrame(() => {
-    const t = sim.t; let pose = clips.idle(t);
-    if (mode === 'game') { const s = gs(); if (s.flags.krishnaDown) pose = clips.fallen(t); else if (s.scene === 'ride' || s.scene === 'battle' || s.scene === 'mount' || s.scene === 'preboss') pose = clips.addPose(clips.ride(t, sim.garuda.hover ? 0.2 : 1), clips.aim(sim.krishna.draw)); }
-    else if (mode === 'showcase') { if (state === 'ride') pose = clips.ride(t); else if (state === 'aim') pose = clips.addPose(clips.ride(t, 0.2), clips.aim(param)); else if (state === 'fallen') pose = clips.fallen(t); else if (state === 'victory') pose = clips.victory(t); }
-    rig.apply(pose, sim.raw || 0.016);
+    const t = sim.t; let frame = idleFrame(t, ['idle0', 'idle1'], 'blink'); let seated = false, lie = 0;
+    const back = actor.seesBack(camera);
+    const aimFrame = (d: number) => `aim${Math.min(3, Math.floor(d * 3.99))}`;
+    if (mode === 'game') {
+      const s = gs();
+      if (s.flags.krishnaDown && !s.flags.dawn) { frame = 'fallen'; lie = Math.min(1, (t - s.flags.krishnaDown) / 0.9); }
+      else if (s.flags.dawn) { seated = true; frame = back ? idleFrame(t, ['ride0', 'ride1']) : idleFrame(t, ['rideF0', 'rideF1']); }
+      else if (SEATED_SCENES.has(s.scene)) {
+        seated = true; const d = sim.krishna.draw, shot = t - sim.krishna.shotAt;
+        if (shot >= 0 && shot < 0.22) frame = 'shoot'; else if (d > 0.05) frame = aimFrame(d); else frame = back ? idleFrame(t, ['ride0', 'ride1']) : idleFrame(t, ['rideF0', 'rideF1']);
+      }
+    } else if (mode === 'showcase') {
+      if (state === 'ride') { seated = true; frame = idleFrame(t, ['ride0', 'ride1']); } else if (state === 'aim') { seated = true; frame = aimFrame(param); } else if (state === 'shoot') { seated = true; frame = 'shoot'; }
+      else if (state === 'fallen') { frame = 'fallen'; lie = 1; } else if (state === 'victory') frame = 'victory'; else if (state === 'portrait') frame = 'portrait';
+    } else frame = idleFrame(t, ['portrait', 'portrait'], 'blink');
+    actor.frame(frame); actor.face(camera);
+    actor.mesh.position.set(lie * -0.25, seated ? -0.56 : lie * -0.35, 0); actor.mesh.rotation.z = -lie * 1.25; actor.shadow.visible = !seated && lie === 0 && mode !== 'portrait';
   });
-  return <primitive object={rig.root} />;
+  return <primitive object={actor.root} />;
 }

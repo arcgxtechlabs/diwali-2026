@@ -4,7 +4,7 @@
  */
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Suspense, useEffect, useRef } from 'react';
-import { Group, PCFSoftShadowMap } from 'three';
+import { Group, PCFShadowMap } from 'three';
 import { Sky } from './Sky';
 import { City } from './City';
 import { Lighting } from './Lighting';
@@ -54,7 +54,7 @@ export function Boss() {
 export function World() {
   const quality = useGameStore((s) => s.quality);
   return (
-    <Canvas dpr={quality === 'ultra' ? [1, 2] : quality === 'high' ? [1, 1.75] : [1, 1.25]} shadows={{ type: PCFSoftShadowMap }} gl={{ antialias: false, powerPreference: 'high-performance', stencil: false }} camera={{ fov: 46, near: 0.1, far: 900, position: [0, 10, 40] }} style={{ position: 'fixed', inset: 0 }} eventSource={typeof document !== 'undefined' ? document.body : undefined}>
+    <Canvas dpr={quality === 'ultra' ? [1, 2] : quality === 'high' ? [1, 1.75] : [1, 1.25]} shadows={{ type: PCFShadowMap }} gl={{ antialias: false, powerPreference: 'high-performance', stencil: false }} camera={{ fov: 46, near: 0.1, far: 900, position: [0, 10, 40] }} style={{ position: 'fixed', inset: 0 }} eventSource={typeof document !== 'undefined' ? document.body : undefined}>
       <Suspense fallback={null}>
         <Stepper />
         <Sky />
